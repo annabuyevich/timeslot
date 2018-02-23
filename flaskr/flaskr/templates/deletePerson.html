@@ -1,0 +1,9 @@
+{% extends "layout.html" %} {% block body %} {% if session.logged_in %}
+
+
+<form method="POST">
+    <h3>Please input the company person you want to delete</h3>
+    Name: <input name="name"> Team: <input name="team"> Position: <input name="position">
+    <button type="submit">Delete</button>
+</form>
+{% endif %} {{ message }} {% endblock %}

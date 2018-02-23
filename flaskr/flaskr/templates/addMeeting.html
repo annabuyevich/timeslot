@@ -1,0 +1,11 @@
+{% extends "layout.html" %} {% block body %} {% if session.logged_in %}
+<h4>RIGHT NOW WE ASSUMING THAT THE WHOLE MEETING ATTENDS EACH MEETING</h4>
+<form method="POST">
+    <h3>Please input the information about your meeting</h3>
+    If you would like a business partner to attend, please fill out their name: <input name="bus_partner"><br> If you would like a business partner to attend, please fill out their company: <input name="company"> <br> Please enter your team name:
+    <input
+        name="team"> <br> Please enter the room you want the meeting to take place in: <input name="room_num"> <br> Please enter the START time of your meeting: <input name="start_time"> <br> Please enter the END time of your meeting: <input name="end_time"> <br> Please
+        enter the DATE of your meeting: <input name="date"><br>
+        <input type="submit">
+</form>
+{% endif %} {{ message }} {% endblock %}

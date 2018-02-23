@@ -1,0 +1,9 @@
+{% extends "layout.html" %} {% block body %} {% if session.logged_in %}
+
+
+<form method="POST">
+    <h3>Please input team name</h3>
+    <input name="text">
+    <input type="submit">
+</form>
+{% endif %} {{ message }} {% endblock %}

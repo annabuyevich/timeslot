@@ -1,0 +1,29 @@
+{% extends "layout.html" %} {% block body %} {% if session.logged_in %}
+
+<!-- <div class="team_costs">
+    TEAM:
+    <form name='item1' action="{{ url_for('show_rooms') }}" method=post>
+        <select id="options">
+	      <option selected = "selected" disabled = "true" value = "team_list_text">Teams</option>
+	      <option name="team1">blue</option>
+	      <option name="team2">green</option>
+	      <option name="team3">red</option>
+    </select>
+        <button type="submit">Submit</button>
+    </form>
+    <!-- May want to add submit button to pass team parameter to the javascript function to get the team we want to display the cost -->
+<!-- </div> -->
+<form method="POST">
+    <h3>Please Input the date as yyyy/mm/dd</h3>
+    <input name="text">
+    <input type="submit">
+</form>
+{% endif %}
+<ul class=entries>
+    {% for entry in entries %}
+    <li>
+        <h2>{{ entry.id }}</h2>
+        {{ entry.cost_per_hr }} {{ entry.included_facilities }} {{ entry.meeting_date }} {% else %}
+        <li><em>Unbelievable. No entries here so far</em> {% endfor %}
+</ul>
+{% endblock %}
