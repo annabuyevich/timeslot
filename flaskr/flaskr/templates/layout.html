@@ -1,25 +1,10 @@
 <!doctype html>
 <title>TimeSlot</title>
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}"> \
-
-<!-- <ul>
-    <li><a href="/show">Home</a></li>
-    <li><a href="/add">Add Team</a></li>
-    <li><a href="/addPerson">Add Person</a></li>
-    <li><a href="/addMeeting">Add Meeting</a></li>
-    <li><a href="/deletePerson">Delete Person</a></li>
-    <li><a href="/deleteTeam">Delete Team</a></li>
-    <li><a href="/deleteMeeting">Delete Meeting</a></li>
-    <li><a href="/cost">Cost</a></li>
-</ul> -->
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 
 <div class="navbar">
-    <a href="/show">Home</a>
-    <a href="/add">Add Team</a>
-    <a href="/addPerson">Add Person</a>
+    <a href="/show">Show</a>
     <a href="/addMeeting">Add Meeting</a>
-    <a href="/deletePerson">Delete Person</a>
-    <a href="/deleteTeam">Delete Team</a>
     <a href="/deleteMeeting">Delete Meeting</a>
     <a href="/cost">Cost</a>
 
@@ -30,11 +15,12 @@
 <div class=page>
 
     <h1>Timeslots</h1>
-    <div class=metanav>
+    <!-- <div class=metanav>
         {% if not session.logged_in %}
         <a href="{{ url_for('login') }}">log in</a> {% else %}
         <a href="{{ url_for('logout') }}">log out</a> {% endif %}
-    </div>
+    </div> -->
+    <h4>Welcome <em>John Smith</em>! </h4>
     {% for message in get_flashed_messages() %}
     <div class=flash>{{ message }}</div>
     {% endfor %} {% block body %}{% endblock %}

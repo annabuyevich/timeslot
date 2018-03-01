@@ -17,14 +17,7 @@ create table meetings (
   start_time text,
   end_time text,
   meeting_date text
-  -- FOREIGN KEY (person_id)
-  --   REFERENCES company_people(id),
-  -- FOREIGN KEY (team_id)
-  --   REFERENCES Teams.team_id,
-  -- FOREIGN KEY (bus_partner_id)
-  --   REFERENCES business_partners(id),
-  -- FOREIGN KEY (room_num)
-  --   REFERENCES rooms(id)
+
 );
 
 drop table if exists teams;
@@ -41,8 +34,6 @@ create table company_people (
   team_id int,
   name text not null,
   position text not null
-  -- FOREIGN KEY (team_id)
-  --   REFERENCES teams(id)
 );
 
 drop table if exists business_partners;
@@ -52,12 +43,3 @@ create table business_partners (
   position text not null,
   company text not null
 );
-
-
-
--- drop table if exists entries;
--- create table entries (
---   id integer primary key autoincrement,
---   title text not null,
---   'text' text not null
--- );

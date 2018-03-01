@@ -1,11 +1,124 @@
-{% extends "layout.html" %} {% block body %} {% if session.logged_in %}
-<h4>RIGHT NOW WE ASSUMING THAT THE WHOLE MEETING ATTENDS EACH MEETING</h4>
+{% extends "layout.html" %} {% block body %}
 <form method="POST">
     <h3>Please input the information about your meeting</h3>
-    If you would like a business partner to attend, please fill out their name: <input name="bus_partner"><br> If you would like a business partner to attend, please fill out their company: <input name="company"> <br> Please enter your team name:
-    <input
-        name="team"> <br> Please enter the room you want the meeting to take place in: <input name="room_num"> <br> Please enter the START time of your meeting: <input name="start_time"> <br> Please enter the END time of your meeting: <input name="end_time"> <br> Please
-        enter the DATE of your meeting: <input name="date"><br>
-        <input type="submit">
+    Year:
+    <select name=year action="other.html">
+            <option value="2018"> 2018</option>
+            <option value="2019"> 2019</option>
+            <option value="2020"> 2020</option>
+            <option value="2021"> 2021</option>
+            <option value="2022"> 2022</option>
+            <option value="2023"> 2023</option>
+            <option value="2024"> 2024</option>
+            <option value="2025"> 2025</option>
+    </select> Month:
+    <select name=month action="other.html">
+            <option value="01"> 01</option>
+            <option value="02"> 02</option>
+            <option value="03"> 03</option>
+            <option value="04"> 04</option>
+            <option value="05"> 05</option>
+            <option value="06"> 06</option>
+            <option value="07"> 07</option>
+            <option value="08"> 08</option>
+            <option value="09"> 09</option>
+            <option value="10"> 10</option>
+            <option value="11"> 11</option>
+            <option value="12"> 12</option>
+    </select> Day:
+    <select name=day action="other.html">
+            <option value="01"> 01</option>
+            <option value="02"> 02</option>
+            <option value="03"> 03</option>
+            <option value="04"> 04</option>
+            <option value="05"> 05</option>
+            <option value="06"> 06</option>
+            <option value="07"> 07</option>
+            <option value="08"> 08</option>
+            <option value="09"> 09</option>
+            <option value="10"> 10</option>
+            <option value="11"> 11</option>
+            <option value="12"> 12</option>
+            <option value="13"> 13</option>
+            <option value="14"> 14</option>
+            <option value="15"> 15</option>
+            <option value="16"> 16</option>
+            <option value="17"> 17</option>
+            <option value="18"> 18</option>
+            <option value="19"> 19</option>
+            <option value="20"> 20</option>
+            <option value="21"> 21</option>
+            <option value="22"> 22</option>
+            <option value="23"> 23</option>
+            <option value="24"> 24</option>
+            <option value="25"> 25</option>
+            <option value="26"> 26</option>
+            <option value="27"> 27</option>
+            <option value="28"> 28</option>
+            <option value="29"> 29</option>
+            <option value="30"> 30</option>
+            <option value="31"> 31</option>
+
+    </select>
+    <br> Please select a start time:
+    <select name=start_time action="other.html">
+        <option value="08:00:00"> 8:00:00</option>
+        <option value="09:00:00"> 9:00:00</option>
+        <option value="10:00:00"> 10:00:00</option>
+        <option value="11:00:00"> 11:00:00</option>
+        <option value="12:00:00"> 12:00:00</option>
+        <option value="13:00:00"> 13:00:00</option>
+        <option value="14:00:00"> 14:00:00</option>
+        <option value="15:00:00"> 15:00:00</option>
+        <option value="16:00:00"> 16:00:00</option>
+        <option value="17:00:00"> 17:00:00</option>
+
+    </select>
+    <br> Please select an end time:
+    <select name=end_time action="other.html">
+        <option value="08:00:00"> 8:00:00</option>
+        <option value="09:00:00"> 9:00:00</option>
+        <option value="10:00:00"> 10:00:00</option>
+        <option value="11:00:00"> 11:00:00</option>
+        <option value="12:00:00"> 12:00:00</option>
+        <option value="13:00:00"> 13:00:00</option>
+        <option value="14:00:00"> 14:00:00</option>
+        <option value="15:00:00"> 15:00:00</option>
+        <option value="16:00:00"> 16:00:00</option>
+        <option value="17:00:00"> 17:00:00</option>
+    </select>
+    <br>
+
+    <br>Please select a Business Partner and Company:
+    <select name="companies" action="results.html">
+  
+            {% for company in companies %}
+            <option value= "{{company}}" SELECTED>{{ company }}</option>"
+            {% endfor %}
+            
+    </select>
+
+
+    <br>Select Team to Participate in Meeting:
+    <select name="teams" action="results.html">
+  
+            {% for team in teams %}
+            <option value= "{{team}}" SELECTED>{{ team }}</option>"
+            {% endfor %}
+            
+    </select>
+
+
+    <br>Please select a meeting room:
+    <select name="rooms" action="results.html">
+  
+            {% for room in rooms %}
+            <option value= "{{room}}" SELECTED>{{ room }}</option>"
+            {% endfor %}
+            
+    </select>
+    <br>
+
+    <input type="submit">
 </form>
-{% endif %} {{ message }} {% endblock %}
+{{ message }} {% endblock %}

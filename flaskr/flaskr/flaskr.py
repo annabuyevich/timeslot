@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 
 timeFMT = '%H:%M:%S';
-
+user_id = "1";
 
 app = Flask(__name__) #create the application instance
 app.config.from_object(__name__) #load config from this file, flaskr.py
@@ -21,8 +21,6 @@ app.config.update(dict(
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
-
-
 def connect_db():
   """Connects to the specific database."""
   rv = sqlite3.connect(app.config['DATABASE'])
@@ -34,10 +32,38 @@ def init_db():
   with app.open_resource('schema.sql', mode='r') as f:
     db.cursor().executescript(f.read())
   
-  query = "INSERT INTO rooms(id, cost_per_hr, included_facilities) VALUES(1, 5, 'tv');"
+  query = "INSERT INTO rooms(id, cost_per_hr, included_facilities) VALUES(1, 5, 'tv'), (2, 3, 'whiteboard');"
+
+  query1 = "INSERT INTO teams(id, name, total_cost_accrued)"
+  query1 += "VALUES (1, 'marketing', 10),"
+  query1 += "(2, 'software', 6),"
+  query1 += "(3, 'summer', 0);" 
+
+  query2 = "INSERT INTO company_people(id, team_id, name, position)"
+  query2 += "VALUES(1,1,'John Smith', 'market researcher'),"
+  query2 += "(2, 2, 'Jane Dough', 'developer'),"
+  query2 += "(3, 3, 'Franny Miller', 'inern');";
+
+  query5 = "DELETE FROM company_people WHERE company_people.id = 3;"
+  query6 = "DELETE FROM teams WHERE teams.id = 3;"
+
+  query3 = "INSERT INTO business_partners(id, name, position, company)"
+  query3 += "VALUES(1,'Jeff Phillip', 'head of marketing', 'Walgreens'),"
+  query3 += "(2, 'Samantha Waters', 'analyst', 'Morgan Stanly'),"
+  query3 += "(3, 'None', 'None', 'None');"
+ 
+  query4 = "INSERT INTO meetings(meeting_id, person_id, team_id, bus_partner_id, room_num, start_time, end_time, meeting_date)"
+  query4 += "VALUES (1, 1, 1, 1,1,'13:00:00', '15:00:00', '2018-04-01'),"
+  query4 += "(2,2,2,2,2, '10:00:00', '12:00:00', '2018-04-02');"
+  
   db.execute(query)
-  # query2 = "INSERT INTO business_partners(id, name,position, company) VALUES(1, '', '','');"
-  # db.execute(query2)
+  db.execute(query1)
+  db.execute(query2)
+  db.execute(query3)
+  db.execute(query4)
+  db.execute(query5)
+  db.execute(query6)
+
   db.commit()
 
 
@@ -45,10 +71,6 @@ def init_db():
 def initdb_command():
   """Initializes the database."""
   init_db()
-  # db = get_db()
-  # query = "INSERT INTO rooms(cost_per_hr, included_facilities) VALUES(5, 'tv');"
-
-  # db.commit();
   print('Initialized the database.')
 
 
@@ -65,273 +87,335 @@ def close_db(error):
   if hasattr(g, 'sqlite_db'):
     g.sqlite_db.close()
 
-# TODO: change to our database here
-@app.route('/show')
-def show():
-  return render_template('show.html')
 
 @app.route('/show', methods=['GET', 'POST'])
 def show_rooms():
   db = get_db()
-  text = request.form['text']
-  # print(text, file=sys.stderr)
-  query = 'select rooms.id as room_num, rooms.cost_per_hr, rooms.included_facilities, meetings.meeting_date from rooms join meetings on meetings.room_num = rooms.id where meetings.meeting_date=' + text
+
+  query = 'select rooms.id, rooms.cost_per_hr, rooms.included_facilities, meetings.meeting_date, meetings.start_time, meetings.end_time, teams.name, company_people.name, meetings.meeting_id,  company_people.position from rooms join meetings on meetings.room_num = rooms.id join teams on meetings.team_id = teams.id join company_people on company_people.id = meetings.person_id order by meetings.meeting_id;'; 
+  query1 = 'select meetings.meeting_id, teams.name from meetings, company_people join teams on teams.id = company_people.team_id order by meetings.meeting_id;';
   cur = db.execute(query)
+  cur1 = db.execute(query1);
   entries = cur.fetchall()
-  return render_template('show.html', entries=entries)
+  entries1 = cur1.fetchall();
 
-@app.route('/addMeeting')
-def addMeeting_page():
-	return render_template('addMeeting.html');
+  retVal = [];
+  for i in range(len(entries)):
+    retVal.append("MEETING:")
+    retVal.append('\n');
+    retVal.append("Room Number: " + str(entries[i][0]));
+    retVal.append('\n');
+    retVal.append("Cost of Room Per Hour: " + str(entries[i][1]));
+    retVal.append('\n');
+    retVal.append("Included Facilities: " + str(entries[i][2]));
+    retVal.append('\n');
+    retVal.append("Meeting Date: " + str(entries[i][3]));
+    retVal.append('\n')
+    retVal.append("Time slot: " + str(entries[i][4]) + " - " + str(entries[i][5]));
+    retVal.append('\n');
+    retVal.append(str(entries[i][7]) + " (Team: " + str(entries1[i][1]) + " , "+ str(entries[i][9]) + ") has a meeting with team " + str(entries[i][6]));
+    retVal.append('\n');
+    retVal.append('-----------------------------------------------------------------------------------')
 
-@app.route('/addMeeting', methods=['GET', 'POST'])
-def addMeeting():
-	message = ""
-	# name = request.form['name'];
-	room = request.form['room_num'];
-	team_name = request.form['team'];
-	team_name = team_name.upper();
-	#WHERE TO USE THIS?
+  return render_template('show.html', entries=retVal)
 
+@app.route('/addMeeting', methods = ['GET', 'POST'])
+def addMeetingPage():
+  companies = [];
+  rooms = [];
+  bus_people = [];
+  teams = []
+  db = get_db();
+  query = "SELECT name, company, position FROM business_partners;"
+  query1 = "SELECT id, included_facilities, cost_per_hr FROM rooms;"
 
+  query2 = "SELECT name FROM teams;"
 
-	start_time = request.form['start_time'];
+  cur = db.execute(query);
+  cur1 = db.execute(query1);
+  cur2 = db.execute(query2);
+  line = cur.fetchall();
+  line1 = cur1.fetchall();
+  line2 = cur2.fetchall();
+  for i in range(len(line)):
+    insertThis = str(line[i][0]) + ", " + str(line[i][1] + ", " + str(line[i][2]));
+    companies.append(insertThis);
   
-	end_time = request.form['end_time'];
-	date = request.form['date'];
-
-	bus_partner = request.form['bus_partner'];
-	bus_partner = bus_partner.upper();
-	company = request.form['company'];
-	company = company.upper();
-  # return render_template('addMeeting.html', message = "test1");
-
-	# if room == "" or name == "" or team_name == "" or start_time == "" or end_time == "" or date == "":
-	# return render_template('addMeeting.html', message = "Did not add meeting.  Please make sure to enter all valid fields");
+  for i in range(len(line1)):
+    rooms.append("Room Num: " + str(line1[i][0]) + ", Facilities:" + str(line1[i][1]) + ", Cost Per Hr:" + str(line1[i][2]));
   
-  
-	delta_time = datetime.strptime(end_time, timeFMT) - datetime.strptime(start_time, timeFMT)
-	if delta_time == '0:0:0':
-		return render_template('addMeeting.html', message = "Please enter a valid time interval")
+  for i in range(len(line2)):
+    teams.append(str(line2[i][0]));
 
+  if request.method == 'POST':
+    query = "SELECT id from teams where teams.name = '" + request.form['teams']+"';";
+    cur = db.execute(query);
+    line = cur.fetchall();
+    dateSelected = request.form['year'] + "-" + request.form['month'] + "-" + request.form['day'];
+    dateTime = dateSelected + " " + request.form['start_time'];
+    query1 = "SELECT strftime('%s', 'now') - strftime('%s','" + dateTime + "');" 
 
-	db = get_db();
+    cur1 = db.execute(query1);
+    line1 = cur1.fetchall();
+   
 
-
-	#Check room availability #TODO: meetings doesn't have a room ( what is constart and conEnd)
-	query = 'SELECT * FROM meetings WHERE room_num =' + room + ' and meeting_date  = "' + date + '" and start_time between "' + start_time + '" and "' + end_time + '";';
-	cur = db.execute(query);
-	line = cur.fetchall();
-
-	if len(line) != 0:
-		message = "Meeting room is unavilable to book on " + date + " from " + start_time + " to " + end_time + ".";
-		return render_template('addMeeting.html', message = message);
-	#NO CONFLICTING MEETING at that time and date
-
-	if bus_partner != "" and company != "":
-		#have a business partner
-		#Check if valid business partner
-		query = "SELECT id FROM business_partners WHERE name = '" + bus_partner + "' and company = '" + company + "';"
-		cur = db.execute(query);
-		line = cur.fetchall();
-		if len(line) == 0:
-			#Else just return not possible and do NOT add meeting
-			message = "Invalid business partner.  No meeting was booked please try again.";
-			return render_template('addMeeting.html', message = message);
-		#Valid busines partner.  Add meetings
-
-		query = "INSERT INTO meetings(person_id, team_id, bus_partner_id, room_num, start_time, end_time, meeting_date) VALUES (1, 1,";
-		query += str(line[0][0]) + ", " + room + ", '" + start_time + "', '" + end_time + "', '" + date + "');"
+    if int(str(line1[0][0])) > 0: 
+      return render_template('results.html', message = "Date or time has already passed.");
     
-	else:
+    endDateTime = dateSelected + " " + request.form['end_time'];
+    query2 = "SELECT strftime('%s','" + endDateTime + "') - strftime('%s','" + dateTime + "');" 
+    cur2 = db.execute(query2);
+    line2 = cur2.fetchall();
+
+    if int(str(line2[0][0])) <= 0:
+      return render_template('results.html', message = "The time you have selected is invalid.");
+
+    return redirect(url_for('resultsOfAddMeeting', companies = request.form['companies'], room = request.form['rooms'], team_id = line[0][0],team_name = request.form['teams'], year = request.form['year'], month = request.form['month'], day = request.form['day'], start_time = request.form['start_time'], end_time = request.form['end_time']));
+  return render_template('addMeeting.html', companies = companies, message = "", rooms = rooms, teams=teams);
+
+
+
+@app.route('/resultOfAddMeeting/<companies>/<room>/<team_id>/<team_name>/<year>/<month>/<day>/<start_time>/<end_time>', methods=['GET','POST'])
+def resultsOfAddMeeting(companies, room, team_id, team_name, year, month, day, start_time, end_time):
+  message = "";
+  delta_time = datetime.strptime(end_time, timeFMT) - datetime.strptime(start_time, timeFMT)
+	
+  if delta_time == '00:00:00':
+    return render_template('results.html', message = "Please enter a valid time interval")
+  
+  if (delta_time.total_seconds()/3600.0) < 0:
+    return render_template('results.html', message = "Please make sure your start time is earlier than your end time.");
+
+  db = get_db();
+  date = year + "-" + month +"-" + day;
+
+  
+  query = "SELECT * FROM meetings WHERE room_num =" + room + " and meeting_date  = '" + date + "' and (start_time >='" +start_time + "' and start_time <'" + end_time + "' OR end_time > '" + start_time + "' and end_time <= '" + end_time + "');";
+  cur = db.execute(query);
+  line = cur.fetchall();
+  if len(line) != 0:
+    message = "Meeting room is unavilable to book on " + date + " from " + start_time + " to " + end_time + ".";
+    return render_template('results.html', message = message);
+	#NO CONFLICTING MEETING at that time and date
+  
+  if companies == "None, None, None":
 		#NO business partner
 		#Insert a meeting with these values
-		query = "INSERT INTO meetings(person_id, team_id, bus_partner_id, room_num, start_time, end_time, meeting_date) VALUES (1, 1, 0, ";
-		query += room + ", '" + start_time + "', '" + end_time + "', '" + date + "');"
-
-	cur = db.execute(query);
-	# line = cur.fetchall();
-	# if len(line) == 0:
-	# 	message = "Failure somewhere with the commands.  Fails when trying to insert."
-	# 	return render_template('addMeeting.html', message = delta_time.total_seconds());
-
+    query = "INSERT INTO meetings(person_id, team_id, bus_partner_id, room_num, start_time, end_time, meeting_date) VALUES (1, "+ team_id +", 0, ";
+    query += room + ", '" + start_time + "', '" + end_time + "', '" + date + "');"
+  else:
+    stuff = companies.split(', ');
+    bus_partner = stuff[0];
+    company = stuff[1];
+    
+    query = "SELECT id FROM business_partners WHERE name = '" + bus_partner + "' and company = '" + company + "';"
+    cur = db.execute(query);
+    line = cur.fetchall();
+    
+    if len(line) == 0:
+			#Else just return not possible and do NOT add meeting
+      message = "Invalid business partner.  No meeting was booked please try again.";
+      return render_template('results.html', message = message);
+		#Valid busines partner.  Add meetings
+    
+    query = "INSERT INTO meetings(person_id, team_id, bus_partner_id, room_num, start_time, end_time, meeting_date) VALUES (1, " + team_id + ", ";
+    query += str(line[0][0]) + ", " + room + ", '" + start_time + "', '" + end_time + "', '" + date + "');";
+    
+  cur = db.execute(query);
 
 	#FIND cost of room and adjust cost in teams 
-	query = "SELECT cost_per_hr FROM rooms WHERE id = " + room + ";";
-	cur = db.execute(query);
-	line = cur.fetchall();
-	if len(line) == 0:
-		message = "Error with finding room cost."
-		return render_template('addMeeting.html', message = message);
+  query = "SELECT cost_per_hr FROM rooms WHERE id = " + room + ";";
+  cur = db.execute(query);
+  line = cur.fetchall();
 
+  if len(line) == 0:
+    message = "Issue with room."
+    return render_template('results.html', message = message);
+
+  room_cost = str(line[0][0]);
+  
+  if len(line) == 0:
+    message = "Error with finding room cost."
+    return render_template('results.html', message = message);
+
+
+  query = "SELECT team_id FROM company_people WHERE id = " + user_id + ";";
+  cur = db.execute(query);
+  line1 = cur.fetchall();
+  if len(line1) == 0:
+    message = "Issue with team_id with the user_id."
+    return render_template('results.html', message = message);
+  user_team_id = str(line1[0][0]);
 
 	#Find totalCostsAccrued so far for the team that has the corresponding team name
-	query = "SELECT total_cost_accrued FROM teams WHERE name = '" + team_name + "';";
-	cur = db.execute(query);
-	historical_costs = cur.fetchall();
-	if len(historical_costs) == 0:
-		message = "No team with that name."
-		return render_template('addMeeting.html', message=message);
+  query = "SELECT total_cost_accrued FROM teams WHERE id = '" + user_team_id + "';";
+  cur = db.execute(query);
+  historical_costs = cur.fetchall();
+  if len(historical_costs) == 0:
+    message = "No team with that name."
+    return render_template('results.html', message=message);
   
 	#Found room cost.  Update the team's cost accrued
   # delta_time = int(time.mktime(delta_time.timetuple()))
-	query = "UPDATE teams SET total_cost_accrued = " + str(historical_costs[0][0] + (delta_time.total_seconds()/3600.0)* int(str(line[0][0])))  + " WHERE name = '" + team_name + "';"; 
-	db.execute(query);
+  query = "UPDATE teams SET total_cost_accrued = " + str(historical_costs[0][0] + (delta_time.total_seconds()/3600.0)* int(str(line[0][0])))  + " WHERE id = '" + user_team_id + "';"; 
+  db.execute(query);
+  
+  db.commit();
+	# message = "Successfully added meeting.";
+	# return render_template('addMeeting.html', message = message);
+  message = "You just booked a meeting in room number " + room + " on " + month + "/" + day + "/" + year + " from " + start_time + " to " + end_time + " with the team called " + team_name ;
+  if companies != "None, None":
+    message += " and " + companies;
+  message += ".";
+  
+  return render_template('results.html', message=message)
 
 
+@app.route('/deleteMeeting', methods = ['GET', 'POST'])
+def deleteMeetingPage():
+  db = get_db()
+  #ONLY DISPLAY MEETINGS IN THE DROP DOWN IF THEY BELONG TO US AND HAVEN'T HAPPENED YET
 
-	db.commit();
-	message = "Successfully added meeting.";
-	return render_template('addMeeting.html', message = message);
+  query = "select rooms.id, rooms.cost_per_hr, rooms.included_facilities, meetings.meeting_date, meetings.start_time, meetings.end_time, teams.name, company_people.name, meetings.meeting_id from rooms join meetings on meetings.room_num = rooms.id join teams on meetings.team_id = teams.id join company_people on company_people.id = meetings.person_id "
+  query += "WHERE company_people.id = " + user_id + " AND meetings.meeting_date between date('now') AND '2030-12-31' AND strftime('%s','now') - strftime('%s',meetings.start_time) >= 0 order by meetings.meeting_id;"; 
+  query1 = 'select meetings.meeting_id, teams.name from meetings, company_people join teams on teams.id = company_people.team_id order by meetings.meeting_id;';
+  cur = db.execute(query)
+  cur1 = db.execute(query1);
+  entries = cur.fetchall()
+  if len(entries) == 0:
+    message = "Time check went weird."
+    return render_template('results.html', message = query)
+  entries1 = cur1.fetchall();
+
+  retVal = [];
+  for i in range(len(entries)):
+    cur = ""
+    cur += ("Room Number: " + str(entries[i][0]));
+    cur += '\n';
+    cur += ("Cost of Room Per Hour: " + str(entries[i][1]) + " ");
+    cur += ("Meeting Date: " + str(entries[i][3]));
+    cur += ("Time slot: " + str(entries[i][4]) + " - " + str(entries[i][5]));
+    cur += '\n';
+    cur += " with team " + str(entries[i][6]);
+    cur += '\n';
+    retVal.append(cur);
+
+  if request.method == 'POST':
+    index = request.form['allMeetings'];
+    index = int(index);
+    room_num = (str(entries[index][0]));
+    meeting_date = (str(entries[index][3]));
+    meeting_date = meeting_date.replace('/','.');
+    start_time = str(entries[index][4]);
+    end_time = str(entries[index][5]);
+
+    return redirect(url_for('resultsOfDeleteMeeting', roomNum = room_num, date = meeting_date, startTime = start_time, endTime = end_time));
+  return render_template('deleteMeeting.html', message = "", allMeetings = retVal);
 
 
-
-
-
-
-@app.route('/add')
-def add_page():
-  return render_template('add.html');
-
-@app.route('/add', methods=['GET', 'POST'])
-def add_team():
+@app.route('/resultsOfDeleteMeeting/<roomNum>/<date>/<startTime>/<endTime>', methods = ['GET', 'POST'])
+def resultsOfDeleteMeeting(roomNum, date, startTime, endTime):
+  message = "";
   db = get_db();
-  text = request.form['text'];
-  query = 'INSERT INTO teams (name, total_cost_accrued) VALUES ("';
-  query += text.upper();
-  query += '", 0.0);';
+  date = date.replace('.','/');
+  delta_time = datetime.strptime(endTime, timeFMT) - datetime.strptime(startTime, timeFMT)
+
+  #We want to make sure that the meeting exists and that the person_id == user_id
+  query = "SELECT meeting_id FROM meetings WHERE start_time = '" + startTime + "' AND end_time = '" + endTime + "' AND meeting_date = '" + date + "' AND room_num = " + roomNum + " AND person_id =" + user_id + ";";
   cur = db.execute(query);
-  db.commit()
-  return render_template('add.html', message = 'Successfully added a team named ' + text);
-
-
-@app.route('/addPerson')
-def addPerson_page():
-  return render_template('addPerson.html');
-
-@app.route('/addPerson', methods=['GET', 'POST'])
-def add_person():
-  db = get_db();
-  name = request.form['name'];
-  position = request.form['position'];
-  team = request.form['team'];
-  company = request.form['company'];
-  if team != '':
-    # corporate
-    #execute query to get team id
-    query1 = 'SELECT id as num FROM teams where name = "' 
-    query1 += team.upper() + '";'
-    cur = db.execute(query1);
-    line = cur.fetchall();
-    message = "";
-    if len(line) == 0:
-      #insert this new team
-      query = 'INSERT INTO teams (name, total_cost_accrued) VALUES ("';
-      query += team.upper();
-      query += '", 0.0);';
-      cur = db.execute(query);
-      message += "Created a new team called " + team.upper() + ".  ";
-      query1 = 'SELECT id as num FROM teams where name = "' 
-      query1 += team.upper() + '";'
-      cur = db.execute(query1);
-      line = cur.fetchall();
-
-    query = 'INSERT INTO company_people(team_id, name, position) VALUES (';
-    query += str(line[0][0]) + ', "'
-    query += name.upper() + '", "';
-    query += position + '");';
-    # return render_template('addPerson.html', message=query)
-
-    db.execute(query);
-    db.commit();
-    message += 'Successfully added ' + name.upper() + ' to the corporate members entity';
-  if company != '':
-    #business partner
-    query = 'INSERT INTO business_partners(name, position, company) VALUES ("';
-    query += name + '", "';
-    query += position + '", "';
-    query += company.upper() + '");';
-    cur = db.execute(query);
-    db.commit()
-    message = 'Successfully added ' + name + ' to the business partners entity';
-  return render_template("addPerson.html", message = message);
-
-
-@app.route('/deletePerson')
-def delete_person():
-  return render_template('deletePerson.html');
-
-
-#Deleting
-@app.route('/deletePerson', methods=['GET','POST'] )
-def delete():
-  db = get_db();
-  name = request.form['name']
-  team = request.form['team']
-  position = request.form['position']
-  query1 = 'SELECT teams.id as team_id from teams WHERE teams.name="'
-  query1 += team.upper() + '";';
-  cur = db.execute(query1)
-  line = cur.fetchall()
+  line = cur.fetchall();
+  meeting_id = str(line[0][0])
   if len(line) == 0:
-    return render_template('deletePerson.html', message = "Invalid team name.")
-  query = 'DELETE from company_people WHERE name = "' + name +'" AND team_id='+ str(line[0][0]) + ' AND position="' + position +'";';  
-  cur = db.cursor()
-  cur.execute(query)
+    message = "No such meeting";
+    #Is there a way to see which is not a real meeting and which fields need to be changed?
+    return render_template('results.html', message=message);
+  
+  meetingID = str(line[0][0]);
+  
+  query = "SELECT cost_per_hr FROM rooms WHERE id= " + roomNum + ";";
+  cur = db.execute(query);
+  line = cur.fetchall();
+  if len(line) == 0:
+    message = "Not a valid room number";
+    return render_template('results.html', message = message);
+	
+  roomCost = int(str(line[0][0]));
+  query = "SELECT team_id FROM company_people WHERE id = " + user_id + ";";
+  cur = db.execute(query);
+  line = cur.fetchall();
+  if len(line) == 0:
+    message = "No such team_id for the given user_id."
+    return render_template('results.html', message = message);
+  user_team_id = str(line[0][0]);
+  query = "SELECT total_cost_accrued FROM teams WHERE id = " + user_team_id + ";";
+  cur = db.execute(query);
+  line = cur.fetchall();
+  if len(line) == 0:
+    message = "Issue with finding the total costs accrued for the given team."
+    return render_template('results.html', message = message);
+  historical_costs = str(line[0][0]);
+  # return render_template('results.html', message=str(roomCost))
+  #UPDATE THE TOTALCOSTSACCRUED - This updates the totalCostsAccrued for a team if the meeting is deleted.  There is no other way to get back what the total costs accrued were after this query.
+  query = "UPDATE teams SET total_cost_accrued = " + str(int(historical_costs) - (delta_time.total_seconds()/3600.0) * roomCost) + " WHERE id = " + user_team_id + ";";
+  db.execute(query);
 
-  # line = cur.fetchall()
-  # if len(line) == 0:
-  #   return render_template('deletePerson.html', message = "Cannot delete.")
-  message = 'You have just deleted ' + name.upper() + ' who belonged to ' + team.upper() + ' team';  
-  db.commit()
-  return render_template('deletePerson.html', message = message)
-
-@app.route('/deleteTeam')
-def deleteTeam_page():
-	return render_template('deleteTeam.html');
-
-@app.route('/deleteTeam', methods=['GET', 'POST'])
-def deleteTeam():
-	db = get_db();
-	team = request.form['team'];
-	team = team.upper();
-	#Check if team exists
-	#If not, do not delete
-	#If exists, delete ALL team members and delete the team
-
-	query = 'SELECT id FROM teams WHERE name = "' + team + '";';
-	cur = db.execute(query);
-	line = cur.fetchall();
-
-	if len(line) == 0:
-		message = "No team with that name."
-		return render_template('deleteTeam.html', message=message);
-
-
-	query = "DELETE FROM company_people WHERE team_id = " + str(line[0][0]) + ";";
-	cur = db.execute(query);
-
-	query = "DELETE FROM teams WHERE id = " + str(line[0][0]) + ";";
-	cur = db.execute(query)
-	# line = cur.fetchall();
-	# if len(line) == 0;
-	# 	message = "Some issue with deleting a team.";
-	# 	return render_template('deleteTeam.html', message=message);
-	db.commit();
-	return render_template('deleteTeam.html', message=str("Successfully deleted " + team));
+  query = "DELETE FROM meetings WHERE meeting_id = " + meeting_id + ";"
+  db.execute(query);
+  db.commit();
+  message = "Successfully deleted the meeting on " + date + " going from " + startTime + " to " + endTime + " in room " + roomNum + ".";
+  return render_template('results.html', message = message);
 
 
+@app.route('/cost', methods=['GET', 'POST'])
+def cost_page():
+  db = get_db();
+	#select time frame?
+	#include deleted teams?
+	#the costs accrued are updated when a meeting is BOTH added and deleted.  We do NOT need to keep track of the costs accrued from deleted meetings.
+  query = "SELECT name FROM teams;"
+  cur = db.execute(query);
+  line = cur.fetchall()
+  
+  teams = [];
+  for i in range(len(line)):
+    teams.append(line[i][0])
+    
+  if request.method == 'POST':
+    query = "SELECT id FROM teams WHERE name = '" + request.form['teams'] + "';";
+    cur = db.execute(query);
+    line = cur.fetchall();
+
+    return redirect(url_for('cost', team_name = request.form['teams'], team_id = str(line[0][0]), year = request.form['year'], month = request.form['month'], day = request.form['day'], toyear = request.form['toyear'], tomonth = request.form['tomonth'], today = request.form['today']));
+  return render_template('cost.html', teams = teams);
+
+@app.route('/cost/<team_name>/<team_id>/<year>/<month>/<day>/<toyear>/<tomonth>/<today>', methods = ['GET', 'POST'])
+def cost(team_name, team_id, year, month, day, toyear, tomonth, today):
+  message = "";
+  db = get_db();
+  startDate = year + "-" + month + "-" + day;
+  endDate = toyear + "-" + tomonth + "-" + today;
+
+  query1 = "SELECT rooms.cost_per_hr, meetings.start_time, meetings.end_time FROM meetings join teams on teams.id = meetings.team_id join rooms on rooms.id = meetings.room_num WHERE teams.id = "+ team_id + " AND meetings.meeting_date >= '" + startDate + "' AND meetings.meeting_date <= '" + endDate + "';";
+  cur1 = db.execute(query1);
+  line1 = cur1.fetchall();
+  if len(line1) == 0:
+    return render_template('results.html', message = "No meetings for " + team_name +  " team from " + startDate + " to " + endDate + ".");
+
+  total = 0;
+  for i in range(len(line1)):
+    delta_time = datetime.strptime(str(line1[i][2]), timeFMT) - datetime.strptime(str(line1[i][1]), timeFMT);
+    delta_time = delta_time.total_seconds()/3600.0
+    total += delta_time * int(str(line1[i][0]));
 
 
+  # query = "SELECT total_cost_accrued FROM teams WHERE id = " + team_id + ";";
+  # cur = db.execute(query);
+  # line = cur.fetchall();
+  message = "The total costs accrued for team " + team_name + " from " + startDate + " to " + endDate + " is " + str(total);
+  return render_template('results.html', message = message);
 
 
-
-
-
-
-
-
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
   error = None
   if request.method == 'POST':
