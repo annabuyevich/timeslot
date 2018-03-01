@@ -1,0 +1,16 @@
+{% extends "layout.html" %} {% block body %}
+
+
+<form method="POST">
+    <h3>Please select the meeting to delete</h3>
+    <select name="allMeetings" action="results.html">
+  
+        {% for i in range(allMeetings|length) %}
+        <option value= "{{i}}" SELECTED>{{ allMeetings[i] }}</option>"
+        {% endfor %}
+        
+    </select>
+    <button type="submit">Delete</button>
+</form>
+
+{{ message }} {% endblock %} 1
