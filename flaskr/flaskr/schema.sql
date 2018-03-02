@@ -24,7 +24,8 @@ drop table if exists teams;
 create table teams (
   id integer primary key autoincrement,
   name text not null,
-  total_cost_accrued decimal(8,2)
+  total_cost_accrued decimal(8,2),
+  deleted integer
 );
 
 
