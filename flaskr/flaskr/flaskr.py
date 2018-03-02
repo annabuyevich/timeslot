@@ -142,7 +142,7 @@ def addMeetingPage():
     companies.append(insertThis);
   
   for i in range(len(line1)):
-    rooms.append("Room Num: " + str(line1[i][0]) + ", Facilities:" + str(line1[i][1]) + ", Cost Per Hr:" + str(line1[i][2]));
+    rooms.append(str(line1[i][0]) + ", " + str(line1[i][1]) + ", " + str(line1[i][2]));
   
   for i in range(len(line2)):
     teams.append(str(line2[i][0]));
@@ -189,8 +189,10 @@ def resultsOfAddMeeting(companies, room, team_id, team_name, year, month, day, s
   db = get_db();
   date = year + "-" + month +"-" + day;
 
-  
-  query = "SELECT * FROM meetings WHERE room_num =" + room + " and meeting_date  = '" + date + "' and (start_time >='" +start_time + "' and start_time <'" + end_time + "' OR end_time > '" + start_time + "' and end_time <= '" + end_time + "');";
+  stuff2 = room.split(', ');
+  room = stuff2[0]
+
+  query = "SELECT * FROM meetings WHERE room_num = " + room + " and meeting_date  = '" + date + "' and ((start_time >= '" + start_time + "' and start_time < '" + end_time + "') OR (end_time > '" + start_time + "' and end_time <= '" + end_time + "'));";
   cur = db.execute(query);
   line = cur.fetchall();
   if len(line) != 0:
@@ -290,11 +292,11 @@ def deleteMeetingPage():
   retVal = [];
   for i in range(len(entries)):
     cur = ""
-    cur += ("Room Number: " + str(entries[i][0]));
+    cur += ("Room: " + str(entries[i][0]));
     cur += '\n';
-    cur += ("Cost of Room Per Hour: " + str(entries[i][1]) + " ");
+    cur += ("Cost Per Hour: " + str(entries[i][1]) + " ");
     cur += ("Meeting Date: " + str(entries[i][3]));
-    cur += ("Time slot: " + str(entries[i][4]) + " - " + str(entries[i][5]));
+    cur += (" Time slot: " + str(entries[i][4]) + " - " + str(entries[i][5]));
     cur += '\n';
     cur += " with team " + str(entries[i][6]);
     cur += '\n';
