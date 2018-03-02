@@ -34,18 +34,18 @@ def init_db():
   
   query = "INSERT INTO rooms(id, cost_per_hr, included_facilities) VALUES(1, 5, 'tv'), (2, 3, 'whiteboard');"
 
-  query1 = "INSERT INTO teams(id, name, total_cost_accrued)"
-  query1 += "VALUES (1, 'marketing', 10),"
-  query1 += "(2, 'software', 6),"
-  query1 += "(3, 'summer', 0);" 
+  query1 = "INSERT INTO teams(id, name, total_cost_accrued, deleted)"
+  query1 += "VALUES (1, 'marketing', 10, 0),"
+  query1 += "(2, 'software', 6, 0),"
+  query1 += "(3, 'summer', 0, 0);" 
 
   query2 = "INSERT INTO company_people(id, team_id, name, position)"
   query2 += "VALUES(1,1,'John Smith', 'market researcher'),"
   query2 += "(2, 2, 'Jane Dough', 'developer'),"
-  query2 += "(3, 3, 'Franny Miller', 'inern');";
+  query2 += "(3, 3, 'Franny Miller', 'intern');";
 
   query5 = "DELETE FROM company_people WHERE company_people.id = 3;"
-  query6 = "DELETE FROM teams WHERE teams.id = 3;"
+  query6 = "UPDATE teams SET deleted = 1 WHERE id = 3;"
 
   query3 = "INSERT INTO business_partners(id, name, position, company)"
   query3 += "VALUES(1,'Jeff Phillip', 'head of marketing', 'Walgreens'),"
@@ -129,7 +129,7 @@ def addMeetingPage():
   query = "SELECT name, company, position FROM business_partners;"
   query1 = "SELECT id, included_facilities, cost_per_hr FROM rooms;"
 
-  query2 = "SELECT name FROM teams;"
+  query2 = "SELECT name FROM teams WHERE deleted = 0;"
 
   cur = db.execute(query);
   cur1 = db.execute(query1);
